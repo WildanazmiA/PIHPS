@@ -7,6 +7,24 @@ from metode import (tren, return_volatilitas, korelasi, clustering,
                     association_rule, anomaly, classification, regression)
 
 
+def _normalize_name(value):
+    return " ".join(str(value).strip().split()).casefold()
+
+
+def _pilih_komoditas_bawah_1(df):
+    """Fokus otomatis pada beras kualitas bawah 1 untuk Kalimantan Timur."""
+    if df is None or df.empty:
+        return None
+    matching = []
+    for commodity in df.columns:
+        name = _normalize_name(commodity)
+        if "beras" in name and "bawah" in name and ("1" in name or "i" in name):
+            matching.append(commodity)
+    if not matching:
+        return None
+    return matching[0]
+
+
 def status_dataset(region="Nasional"):
     print(f"Sumber: Bank Indonesia — PIHPS | Wilayah: {region}")
     for market_type, market_name in MARKET_TYPES.items():
@@ -144,6 +162,11 @@ def main():
                 print(f"Gagal mengambil daftar provinsi PIHPS: {exc}")
                 continue
             selected_commodity = None
+            if selected_region.casefold() == "kalimantan timur":
+                df = load_data(selected_market_type, region=selected_region)
+                selected_commodity = _pilih_komoditas_bawah_1(df)
+                if selected_commodity:
+                    print(f"Komoditas fokus otomatis: {selected_commodity}")
             print(f"Wilayah analisis: {selected_region} (ID PIHPS: {selected_province_id or 'nasional'})")
             continue
         if choice == "12":
@@ -222,3 +245,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
